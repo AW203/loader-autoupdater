@@ -1,55 +1,76 @@
-# C++ Auto-Update System for Loaders
+# Système d'Auto-Update pour Loaders
 
-This repository contains a C++ auto-update system designed to be easily integrated into existing loaders or applications.
+Ce dépôt contient un système d'auto-update en C++ conçu pour être facilement intégré à des loaders existants.
 
-## Configuration Instructions for GitHub Auto-Update
+## Fonctionnement du système
 
-### 1. Setup your GitHub Repository
+Le système d'auto-update permet à votre application de :
 
-1. Make sure your repository is public (or your credentials are properly configured for private access)
-2. Place the `version.txt` file in the root of your repository with the current version number (e.g., "1.0.0")
-3. Create a new release on GitHub:
-   - Go to your repository → Releases → Create a new release
-   - Tag version: v1.0.0 (match with version.txt)
-   - Upload the compiled loader.exe as a binary file to the release
-   - Publish the release
+1. Vérifier automatiquement si une nouvelle version est disponible sur GitHub
+2. Télécharger la nouvelle version depuis les releases GitHub
+3. Installer la mise à jour et redémarrer l'application
+4. Afficher correctement les informations de version dans les propriétés du fichier EXE
 
-### 2. Compile the Loader
+## Configuration et utilisation
 
-1. Install TDM-GCC if not already installed
-2. Run the `compile.bat` script to compile the simple_loader.cpp
-3. This will create `loader.exe` which automatically checks for updates from your GitHub repository
+### Prérequis
 
-### 3. Testing the Auto-Update
+- TDM-GCC (MinGW) installé sur votre système
+- Git pour gérer les versions
 
-1. Run `loader.exe` - it will check the version.txt on GitHub against its own version
-2. If versions match, it will proceed to the loader functionality
-3. If GitHub has a newer version, it will download and install the update
+### Installation et compilation
 
-### 4. How to Update Your Application
+1. Clonez ce dépôt :
+   ```
+   git clone https://github.com/AW203/loader-autoupdater.git
+   ```
 
-When you want to release a new version:
+2. **Important** : Modifiez les fichiers batch pour qu'ils contiennent le chemin complet vers votre dossier :
+   - Ouvrez `compile.bat` et `compile_release.bat` 
+   - Assurez-vous que la ligne `cd C:\Users\Yayam\Music\loader-autoupdate` pointe vers votre dossier
 
-1. Update the code as needed and recompile to create a new `loader.exe`
-2. Update `version.txt` in your repository with the new version number (e.g., change from "1.0.0" to "1.0.1")
-3. Create a new release on GitHub and upload the new `loader.exe`
-4. When users run their old version, it will detect the update and automatically download the new version
+3. Compilation :
+   - Pour la version de base (0.9.0) : exécutez `compile.bat`
+   - Pour la version release (1.0.0) : exécutez `compile_release.bat`
 
-## Features
+### Configuration de GitHub
 
-- Automatic update checks from a GitHub repository
-- Download and installation of updates
-- Simple versioning system
-- Self-updating capability with automatic restart
-- Windows compatible
+1. Assurez-vous que le fichier `version.txt` à la racine de votre dépôt contient la version actuelle (ex: "1.0.0")
+2. Créez une release sur GitHub :
+   - Allez sur votre dépôt → Releases → Create a new release
+   - Tag version: v1.0.0 (correspondant à version.txt)
+   - Téléversez le fichier `loader.exe` compilé avec `compile_release.bat`
+   - Publiez la release
 
-## Project Structure
+### Test du système d'auto-update
 
-- `simple_loader.cpp` - A simplified loader with built-in auto-update functionality
-- `main.cpp` - The main auto-update system as a reusable class 
-- `version.txt` - Version file used to determine if an update is available
-- `compile.bat` - Simple script to compile the loader with TDM-GCC
+1. Compilez la version de base (0.9.0) avec `compile.bat`
+2. Exécutez le loader généré
+3. Le loader devrait détecter la version 1.0.0 sur GitHub et télécharger la mise à jour
 
-## License
+## Fichiers principaux
 
-This project is under the MIT License. 
+- `simple_loader.cpp` - Version de base du loader (0.9.0)
+- `release_loader.cpp` - Version release du loader (1.0.0)
+- `loader_version.rc` - Informations de version pour la version de base
+- `release_version.rc` - Informations de version pour la version release
+- `compile.bat` - Script pour compiler la version de base
+- `compile_release.bat` - Script pour compiler la version release
+- `version.txt` - Fichier de version utilisé par GitHub
+
+## Comment mettre à jour votre application
+
+Quand vous voulez publier une nouvelle version :
+
+1. Modifiez `release_loader.cpp` et `release_version.rc` pour mettre à jour le numéro de version
+2. Compilez la nouvelle version avec `compile_release.bat`
+3. Mettez à jour `version.txt` sur GitHub avec le nouveau numéro de version
+4. Créez une nouvelle release sur GitHub et téléversez le nouveau `loader.exe`
+
+## Informations de version dans les propriétés du fichier
+
+Le système utilise les fichiers `.rc` pour ajouter des informations de version qui sont visibles dans les propriétés du fichier .exe sous Windows. Ces informations permettent de distinguer facilement les différentes versions de votre loader.
+
+## Licence
+
+Ce projet est sous licence MIT. 

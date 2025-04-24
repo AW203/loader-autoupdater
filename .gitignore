@@ -1,0 +1,41 @@
+# Compiled files
+*.exe
+*.o
+*.obj
+*.res
+*.dll
+*.lib
+*.so
+*.dylib
+*.pdb
+
+# Build directories
+build/
+Debug/
+Release/
+x64/
+x86/
+
+# Temporary files
+*.log
+*.tlog
+*~
+*.bak
+*.tmp
+
+# Windows specific
+Thumbs.db
+desktop.ini
+
+# Visual Studio specific
+.vs/
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+*.user
+
+# macOS specific
+.DS_Store
+.AppleDouble
+.LSOverride 
