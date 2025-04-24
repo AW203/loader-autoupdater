@@ -16,19 +16,21 @@
 const std::string GITHUB_USER = "AW203";
 const std::string GITHUB_REPO = "loader-autoupdater";
 const std::string VERSION_FILE_URL = "https://raw.githubusercontent.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/main/version.txt";
-const std::string DOWNLOAD_URL = "https://github.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/releases/latest/download/loader.exe";
+const std::string DOWNLOAD_URL = "https://github.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/releases/latest/download/loader_1.0.0.exe";
 
 // Function to fetch content from a URL
 std::string fetchFromUrl(const std::string& url) {
+    std::cout << "[Debug] Attempting to fetch from URL: " << url << std::endl;
+    
     HINTERNET hInternet = InternetOpenA("AutoUpdater", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
     if (!hInternet) {
-        std::cout << "Failed to open internet connection" << std::endl;
+        std::cout << "[Debug] Failed to open internet connection. Error: " << GetLastError() << std::endl;
         return "";
     }
 
     HINTERNET hFile = InternetOpenUrlA(hInternet, url.c_str(), NULL, 0, INTERNET_FLAG_RELOAD, 0);
     if (!hFile) {
-        std::cout << "Failed to open URL: " << url << std::endl;
+        std::cout << "[Debug] Failed to open URL. Error: " << GetLastError() << std::endl;
         InternetCloseHandle(hInternet);
         return "";
     }
@@ -50,22 +52,35 @@ std::string fetchFromUrl(const std::string& url) {
         result.pop_back();
     }
     
+    std::cout << "[Debug] Fetched content: '" << result << "'" << std::endl;
     return result;
 }
 
 // Function to download a file from a URL to a local path
 bool downloadFile(const std::string& url, const std::string& path) {
+    std::cout << "[Debug] Attempting to download file from: " << url << std::endl;
+    std::cout << "[Debug] Saving to: " << path << std::endl;
+    
     HRESULT hr = URLDownloadToFileA(NULL, url.c_str(), path.c_str(), 0, NULL);
-    return SUCCEEDED(hr);
+    if (SUCCEEDED(hr)) {
+        std::cout << "[Debug] Download succeeded!" << std::endl;
+        return true;
+    } else {
+        std::cout << "[Debug] Download failed with error code: " << hr << std::endl;
+        return false;
+    }
 }
 
 // Function to get local app data directory
 std::string getAppDataDir() {
     char path[MAX_PATH];
     if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_APPDATA, NULL, 0, path))) {
-        return std::string(path) + "\\AutoUpdateLoader";
+        std::string appDir = std::string(path) + "\\AutoUpdateLoader";
+        std::cout << "[Debug] App data directory: " << appDir << std::endl;
+        return appDir;
     }
     // Fallback to current directory if app data can't be accessed
+    std::cout << "[Debug] Failed to get AppData path, using current directory." << std::endl;
     return ".";
 }
 
@@ -143,7 +158,21 @@ int main() {
     if (checkAndUpdate()) {
         // If update is available and downloaded, exit to let the updater work
         std::cout << "[*] Exiting for update. Application will restart automatically." << std::endl;
+        std::cout << "\nPress Enter to exit..." << std::endl;
+        std::cin.ignore();
+        std::cin.get();
         return 0;
+    }
+    
+    // Get remote version to verify if an update was detected but failed
+    std::string remoteVersion = fetchFromUrl(VERSION_FILE_URL);
+    if (!remoteVersion.empty() && remoteVersion != VERSION) {
+        // If remote version is different but we got here, update failed
+        std::cout << "[!] Update was detected but failed to apply." << std::endl;
+        std::cout << "[!] Please check your internet connection or download manually." << std::endl;
+        std::cout << "\nPress Enter to continue anyway..." << std::endl;
+        std::cin.ignore();
+        std::cin.get();
     }
     
     // No update or update failed, continue with normal operation
