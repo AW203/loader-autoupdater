@@ -9,38 +9,65 @@ This guide explains the step-by-step process for updating your loader to a new v
 When releasing a new version, you need to update:
 
 1. **In `release_loader.cpp`**:
-   - Find the line: `#define VERSION "1.0.0"`
-   - Change it to your new version number: `#define VERSION "1.1.0"`
+   - Find the line with the version definition (around line 13):
+     ```cpp
+     #define VERSION "1.0.0"
+     ```
+   - Change it to your new version number:
+     ```cpp
+     #define VERSION "1.1.0"
+     ```
 
 2. **In `release_version.rc`**:
-   - Update all version references:
-   ```
-   #define VER_FILEVERSION             1,1,0,0
-   #define VER_FILEVERSION_STR         "1.1.0.0\0"
-   #define VER_PRODUCTVERSION          1,1,0,0
-   #define VER_PRODUCTVERSION_STR      "1.1.0\0"
-   ```
+   - Update all version references (around lines 16-19):
+     ```
+     #define VER_FILEVERSION             1,0,0,0
+     #define VER_FILEVERSION_STR         "1.0.0.0\0"
+     #define VER_PRODUCTVERSION          1,0,0,0
+     #define VER_PRODUCTVERSION_STR      "1.0.0\0"
+     ```
+   - Change them to:
+     ```
+     #define VER_FILEVERSION             1,1,0,0
+     #define VER_FILEVERSION_STR         "1.1.0.0\0"
+     #define VER_PRODUCTVERSION          1,1,0,0
+     #define VER_PRODUCTVERSION_STR      "1.1.0\0"
+     ```
 
 ### For a Base Version Update (Optional)
 
 If you also need to update the base version:
 
 1. **In `simple_loader.cpp`**:
-   - Find the line: `#define VERSION "0.9.0"`
-   - Change it to your new base version: `#define VERSION "0.9.1"`
+   - Find the version definition line (around line 13):
+     ```cpp
+     #define VERSION "0.9.0"
+     ```
+   - Change it to your new base version:
+     ```cpp
+     #define VERSION "0.9.1"
+     ```
 
 2. **In `loader_version.rc`**:
-   - Update all version references:
-   ```
-   #define VER_FILEVERSION             0,9,1,0
-   #define VER_FILEVERSION_STR         "0.9.1.0\0"
-   #define VER_PRODUCTVERSION          0,9,1,0
-   #define VER_PRODUCTVERSION_STR      "0.9.1\0"
-   ```
+   - Update all version references (around lines 16-19):
+     ```
+     #define VER_FILEVERSION             0,9,0,0
+     #define VER_FILEVERSION_STR         "0.9.0.0\0"
+     #define VER_PRODUCTVERSION          0,9,0,0
+     #define VER_PRODUCTVERSION_STR      "0.9.0\0"
+     ```
+   - Change them to:
+     ```
+     #define VER_FILEVERSION             0,9,1,0
+     #define VER_FILEVERSION_STR         "0.9.1.0\0"
+     #define VER_PRODUCTVERSION          0,9,1,0
+     #define VER_PRODUCTVERSION_STR      "0.9.1\0"
+     ```
 
 ## 2. Compile the New Version
 
 1. **Compile the release version**:
+   - Open a command prompt in the project directory
    - Run `compile_release_auto.bat`
    - This script will automatically:
      - Extract the version from your code
@@ -78,6 +105,7 @@ If you also need to update the base version:
 - **Version not detected**: Make sure the GitHub release tag matches your code version (with 'v' prefix)
 - **Compilation errors**: Check if all required libraries are properly linked
 - **Update not working**: Verify the GitHub release is published and contains a valid executable
+- **Incorrect version in executable**: Double-check all version references in both `.cpp` and `.rc` files
 
 ## Advanced: Versioning System
 
