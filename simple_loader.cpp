@@ -135,9 +135,21 @@ bool checkAndUpdate() {
     // Extract filename only for taskkill
     std::string currentExeFile = strrchr(currentExePath, '\\') ? strrchr(currentExePath, '\\') + 1 : currentExePath;
     
+    // Get directory of current executable
+    std::string currentDir = std::string(currentExePath);
+    size_t lastBackslash = currentDir.find_last_of('\\');
+    if (lastBackslash != std::string::npos) {
+        currentDir = currentDir.substr(0, lastBackslash + 1);
+    } else {
+        currentDir = ".\\";
+    }
+    
+    // Create new filename with version
+    std::string newVersionedFilename = currentDir + "loader_" + remoteVersion + ".exe";
+    
     std::ofstream updater(updaterPath);
     updater << "@echo off" << std::endl;
-    updater << "echo Updating..." << std::endl;
+    updater << "echo Updating to version " << remoteVersion << "..." << std::endl;
     
     // Try to kill the original process if it's still running
     updater << "echo Attempting to close any running instances..." << std::endl;
@@ -164,9 +176,9 @@ bool checkAndUpdate() {
     updater << "echo Installing new version..." << std::endl;
     updater << "copy \"" << downloadPath << "\" \"" << exePath << "\"" << std::endl;
     
-    // Also copy to original location if possible
-    updater << "echo Copying to original location..." << std::endl;
-    updater << "copy \"" << downloadPath << "\" \"" << currentExePath << "\" 2>nul" << std::endl;
+    // Also copy to original location with versioned name
+    updater << "echo Copying to original location with versioned name..." << std::endl;
+    updater << "copy \"" << downloadPath << "\" \"" << newVersionedFilename << "\" 2>nul" << std::endl;
     
     // Clean up downloaded file
     updater << "del /F /Q \"" << downloadPath << "\"" << std::endl;
@@ -174,8 +186,8 @@ bool checkAndUpdate() {
     updater << "echo Update completed!" << std::endl;
     
     // Launch new version (prefer original location if successful, otherwise AppData)
-    updater << "if exist \"" << currentExePath << "\" (" << std::endl;
-    updater << "  start \"\" \"" << currentExePath << "\"" << std::endl;
+    updater << "if exist \"" << newVersionedFilename << "\" (" << std::endl;
+    updater << "  start \"\" \"" << newVersionedFilename << "\"" << std::endl;
     updater << ") else (" << std::endl;
     updater << "  start \"\" \"" << exePath << "\"" << std::endl;
     updater << ")" << std::endl;
