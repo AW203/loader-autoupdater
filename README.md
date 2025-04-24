@@ -15,15 +15,16 @@ The auto-update system allows your application to:
 
 ### Prerequisites
 
-- TDM-GCC (MinGW) installed on your system
-- Git for version management
+- Any C++ compiler (GCC, MinGW, MSVC, etc.)
+- The compiled system works on Windows without any additional dependencies
 
 ### Installation and Compilation
 
-1. Clone this repository:
+1. Clone or download this repository:
    ```
    git clone https://github.com/AW203/loader-autoupdater.git
    ```
+   Or simply download as ZIP from GitHub
 
 2. **Important**: Modify the batch files to contain the path to your folder:
    - Open `compile.bat`, `compile_release.bat`, and `compileALL.bat`
@@ -49,6 +50,7 @@ To customize this auto-update system for your own project, you'll need to modify
    - In `simple_loader.cpp`: Change `#define VERSION "0.9.0"` to your base version
    - In `release_loader.cpp`: Change `#define VERSION "1.0.0"` to your release version
    - In `loader_version.rc` and `release_version.rc`: Update the version information
+   - In `version.txt`: Set this to match your release version
 
 3. **Application Name** (in both `.rc` files):
    ```
@@ -69,18 +71,21 @@ To customize this auto-update system for your own project, you'll need to modify
 
 ### GitHub Configuration
 
-1. Make sure the `version.txt` file at the root of your repository contains the current version (e.g., "1.0.0")
+1. Make sure the `version.txt` file at the root of your repository contains the latest release version (e.g., "1.0.0")
 2. Create a release on GitHub:
    - Go to your repository → Releases → Create a new release
    - Tag version: v1.0.0 (matching version.txt)
-   - Upload the `loader_1.0.0.exe` file compiled with `compile_release.bat`
+   - Upload the compiled executable and rename it to `loader.exe` (important: this exact name is required)
    - Publish the release
 
 ### Testing the Auto-Update System
 
-1. Compile the base version (0.9.0) with `compile.bat`
-2. Run the generated loader (`loader_0.9.0.exe`)
-3. The loader should detect version 1.0.0 on GitHub and download the update
+1. Run your version 0.9.0 loader (e.g. `loader_0.9.0.exe`)
+2. The loader should detect version 1.0.0 on GitHub and download the update
+3. After downloading, it will automatically:
+   - Close the current loader
+   - Install the new version as `loader_1.0.0.exe`
+   - Launch the updated version
 
 ## Main Files
 
@@ -100,7 +105,7 @@ When you want to release a new version:
 1. Modify `release_loader.cpp` and `release_version.rc` to update the version number
 2. Compile the new version with `compile_release.bat`
 3. Update `version.txt` on GitHub with the new version number
-4. Create a new release on GitHub and upload the new `loader_1.0.0.exe`
+4. Create a new release on GitHub and upload the new executable renamed to `loader.exe`
 
 ## Version Information in File Properties
 
