@@ -132,31 +132,53 @@ bool checkAndUpdate() {
     char currentExePath[MAX_PATH];
     GetModuleFileNameA(NULL, currentExePath, MAX_PATH);
     
+    // Extract filename only for taskkill
+    std::string currentExeFile = strrchr(currentExePath, '\\') ? strrchr(currentExePath, '\\') + 1 : currentExePath;
+    
     std::ofstream updater(updaterPath);
     updater << "@echo off" << std::endl;
     updater << "echo Updating..." << std::endl;
-    updater << "timeout /t 1 /nobreak > nul" << std::endl;
+    
+    // Try to kill the original process if it's still running
+    updater << "echo Attempting to close any running instances..." << std::endl;
+    updater << "taskkill /F /IM " << currentExeFile << " 2>nul" << std::endl;
+    updater << "timeout /t 2 /nobreak > nul" << std::endl;
     
     // Wait to make sure the original process is closed
-    updater << "echo Waiting for original process to close..." << std::endl;
-    updater << "timeout /t 2 /nobreak > nul" << std::endl;
+    updater << "echo Waiting for processes to close..." << std::endl;
+    updater << "timeout /t 3 /nobreak > nul" << std::endl;
     
     // Forcefully delete old executable (using permanent deletion)
     updater << "echo Removing old version..." << std::endl;
     updater << "if exist \"" << exePath << "\" del /F /Q \"" << exePath << "\"" << std::endl;
     updater << "if exist \"" << currentExePath << "\" del /F /Q \"" << currentExePath << "\"" << std::endl;
     
+    // If deletion failed, try to move the file instead
+    updater << "if exist \"" << currentExePath << "\" (" << std::endl;
+    updater << "  echo Direct deletion failed, trying alternative method..." << std::endl;
+    updater << "  ren \"" << currentExePath << "\" old_loader_to_delete.exe" << std::endl;
+    updater << "  del /F /Q old_loader_to_delete.exe" << std::endl;
+    updater << ")" << std::endl;
+    
     // Copy new version
     updater << "echo Installing new version..." << std::endl;
     updater << "copy \"" << downloadPath << "\" \"" << exePath << "\"" << std::endl;
+    
+    // Also copy to original location if possible
+    updater << "echo Copying to original location..." << std::endl;
+    updater << "copy \"" << downloadPath << "\" \"" << currentExePath << "\" 2>nul" << std::endl;
     
     // Clean up downloaded file
     updater << "del /F /Q \"" << downloadPath << "\"" << std::endl;
     
     updater << "echo Update completed!" << std::endl;
     
-    // Launch new version
-    updater << "start \"\" \"" << exePath << "\"" << std::endl;
+    // Launch new version (prefer original location if successful, otherwise AppData)
+    updater << "if exist \"" << currentExePath << "\" (" << std::endl;
+    updater << "  start \"\" \"" << currentExePath << "\"" << std::endl;
+    updater << ") else (" << std::endl;
+    updater << "  start \"\" \"" << exePath << "\"" << std::endl;
+    updater << ")" << std::endl;
     
     // Self-destruct the updater script
     updater << "echo Cleaning up..." << std::endl;
@@ -179,11 +201,9 @@ int main() {
     
     // Check for updates first
     if (checkAndUpdate()) {
-        // If update is available and downloaded, exit to let the updater work
+        // If update is available and downloaded, exit immediately to let the updater work
         std::cout << "[*] Exiting for update. Application will restart automatically." << std::endl;
-        std::cout << "\nPress Enter to exit..." << std::endl;
-        std::cin.ignore();
-        std::cin.get();
+        // No need to wait for user input here - exit immediately
         return 0;
     }
     
