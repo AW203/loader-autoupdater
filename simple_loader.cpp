@@ -15,8 +15,36 @@
 // GitHub repository details
 const std::string GITHUB_USER = "AW203";
 const std::string GITHUB_REPO = "loader-autoupdater";
-const std::string VERSION_FILE_URL = "https://raw.githubusercontent.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/main/version.txt";
+// API URL to get latest release info
+const std::string GITHUB_API_URL = "https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO + "/releases/latest";
 const std::string DOWNLOAD_URL = "https://github.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/releases/latest/download/loader.exe";
+
+// Function to extract version from GitHub API response
+std::string extractVersionFromAPI(const std::string& apiResponse) {
+    // Look for "tag_name":" pattern in the JSON response
+    std::string searchPattern = "\"tag_name\":\"";
+    size_t tagPos = apiResponse.find(searchPattern);
+    if (tagPos == std::string::npos) {
+        return "";
+    }
+    
+    // Move position to start of the actual version
+    tagPos += searchPattern.length();
+    
+    // Find the closing quote
+    size_t endPos = apiResponse.find("\"", tagPos);
+    if (endPos == std::string::npos) {
+        return "";
+    }
+    
+    // Extract the version string (remove 'v' prefix if present)
+    std::string version = apiResponse.substr(tagPos, endPos - tagPos);
+    if (!version.empty() && version[0] == 'v') {
+        version = version.substr(1);
+    }
+    
+    return version;
+}
 
 // Function to fetch content from a URL
 std::string fetchFromUrl(const std::string& url) {
@@ -28,7 +56,16 @@ std::string fetchFromUrl(const std::string& url) {
         return "";
     }
 
-    HINTERNET hFile = InternetOpenUrlA(hInternet, url.c_str(), NULL, 0, INTERNET_FLAG_RELOAD, 0);
+    // Set up the request headers for GitHub API
+    HINTERNET hFile;
+    if (url.find("api.github.com") != std::string::npos) {
+        // Add User-Agent header for GitHub API
+        const char* headers = "User-Agent: AutoUpdateLoader\r\n";
+        hFile = InternetOpenUrlA(hInternet, url.c_str(), headers, strlen(headers), INTERNET_FLAG_RELOAD, 0);
+    } else {
+        hFile = InternetOpenUrlA(hInternet, url.c_str(), NULL, 0, INTERNET_FLAG_RELOAD, 0);
+    }
+    
     if (!hFile) {
         std::cout << "[Debug] Failed to open URL. Error: " << GetLastError() << std::endl;
         InternetCloseHandle(hInternet);
@@ -47,12 +84,12 @@ std::string fetchFromUrl(const std::string& url) {
     InternetCloseHandle(hFile);
     InternetCloseHandle(hInternet);
     
-    // Clean the string (remove whitespace and newlines)
-    while (!result.empty() && (result.back() == '\n' || result.back() == '\r' || result.back() == ' ')) {
-        result.pop_back();
+    std::cout << "[Debug] API response length: " << result.length() << " bytes" << std::endl;
+    // Don't print the entire response as it can be very long
+    if (result.length() > 0) {
+        std::cout << "[Debug] API response starts with: " << result.substr(0, 100) << "..." << std::endl;
     }
     
-    std::cout << "[Debug] Fetched content: '" << result << "'" << std::endl;
     return result;
 }
 
@@ -93,10 +130,16 @@ void createDirIfNotExists(const std::string& dir) {
 bool checkAndUpdate() {
     std::cout << "[*] Checking for updates..." << std::endl;
     
-    // Get remote version
-    std::string remoteVersion = fetchFromUrl(VERSION_FILE_URL);
+    // Get remote version from GitHub API
+    std::string apiResponse = fetchFromUrl(GITHUB_API_URL);
+    if (apiResponse.empty()) {
+        std::cout << "[!] Failed to get API response from GitHub." << std::endl;
+        return false;
+    }
+    
+    std::string remoteVersion = extractVersionFromAPI(apiResponse);
     if (remoteVersion.empty()) {
-        std::cout << "[!] Failed to get remote version." << std::endl;
+        std::cout << "[!] Failed to extract version from GitHub API response." << std::endl;
         return false;
     }
     
@@ -220,7 +263,8 @@ int main() {
     }
     
     // Get remote version to verify if an update was detected but failed
-    std::string remoteVersion = fetchFromUrl(VERSION_FILE_URL);
+    std::string apiResponse = fetchFromUrl(GITHUB_API_URL);
+    std::string remoteVersion = extractVersionFromAPI(apiResponse);
     if (!remoteVersion.empty() && remoteVersion != VERSION) {
         // If remote version is different but we got here, update failed
         std::cout << "[!] Update was detected but failed to apply." << std::endl;

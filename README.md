@@ -6,7 +6,7 @@ This repository contains a C++ auto-update system designed to be easily integrat
 
 The auto-update system allows your application to:
 
-1. Automatically check if a new version is available on GitHub
+1. Automatically check if a new version is available using the GitHub API
 2. Download the new version from GitHub releases
 3. Install the update and restart the application
 4. Display version information in the EXE file properties
@@ -50,7 +50,6 @@ To customize this auto-update system for your own project, you'll need to modify
    - In `simple_loader.cpp`: Change `#define VERSION "0.9.0"` to your base version
    - In `release_loader.cpp`: Change `#define VERSION "1.0.0"` to your release version
    - In `loader_version.rc` and `release_version.rc`: Update the version information
-   - In `version.txt`: Set this to match your release version
 
 3. **Application Name** (in both `.rc` files):
    ```
@@ -71,17 +70,16 @@ To customize this auto-update system for your own project, you'll need to modify
 
 ### GitHub Configuration
 
-1. Make sure the `version.txt` file at the root of your repository contains the latest release version (e.g., "1.0.0")
-2. Create a release on GitHub:
+1. Create a release on GitHub:
    - Go to your repository → Releases → Create a new release
-   - Tag version: v1.0.0 (matching version.txt)
+   - Tag version: v1.0.0 (the "v" prefix is important as the system will strip it automatically)
    - Upload the compiled executable and rename it to `loader.exe` (important: this exact name is required)
    - Publish the release
 
 ### Testing the Auto-Update System
 
 1. Run your version 0.9.0 loader (e.g. `loader_0.9.0.exe`)
-2. The loader should detect version 1.0.0 on GitHub and download the update
+2. The loader will use the GitHub API to check for updates and detect version 1.0.0
 3. After downloading, it will automatically:
    - Close the current loader
    - Install the new version as `loader_1.0.0.exe`
@@ -95,7 +93,6 @@ To customize this auto-update system for your own project, you'll need to modify
 - `release_version.rc` - Version information for the release version
 - `compile.bat` - Script to compile the base version
 - `compile_release.bat` - Script to compile the release version
-- `version.txt` - Version file used by GitHub
 - `compileALL.bat` - Script to compile both versions
 
 ## How to Update Your Application
@@ -104,12 +101,20 @@ When you want to release a new version:
 
 1. Modify `release_loader.cpp` and `release_version.rc` to update the version number
 2. Compile the new version with `compile_release.bat`
-3. Update `version.txt` on GitHub with the new version number
-4. Create a new release on GitHub and upload the new executable renamed to `loader.exe`
+3. Create a new release on GitHub with tag version v1.1.0 (or update existing release)
+4. Upload the new executable renamed to `loader.exe`
 
 ## Version Information in File Properties
 
 The system uses `.rc` files to add version information that is visible in the .exe file properties under Windows. This information makes it easy to distinguish between different versions of your loader.
+
+## Advanced: Using GitHub API
+
+This system uses the GitHub API to check for updates, which provides several advantages:
+- No need to maintain a separate version.txt file
+- Updates can be deployed by simply creating a new release
+- The system automatically extracts version information from release tags
+- Works within GitHub's API rate limits (5000 requests/hour for authenticated requests, 60/hour for anonymous)
 
 ## License
 
