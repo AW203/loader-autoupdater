@@ -17,7 +17,6 @@ const std::string GITHUB_USER = "AW203";
 const std::string GITHUB_REPO = "loader-autoupdater";
 // API URL to get latest release info
 const std::string GITHUB_API_URL = "https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO + "/releases/latest";
-const std::string DOWNLOAD_URL = "https://github.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/releases/latest/download/loader.exe";
 
 // Function to extract version from GitHub API response
 std::string extractVersionFromAPI(const std::string& apiResponse) {
@@ -44,6 +43,28 @@ std::string extractVersionFromAPI(const std::string& apiResponse) {
     }
     
     return version;
+}
+
+// Function to extract download URL from GitHub API response
+std::string extractDownloadURLFromAPI(const std::string& apiResponse) {
+    // Look for "browser_download_url":" pattern in the JSON response
+    std::string searchPattern = "\"browser_download_url\":\"";
+    size_t urlPos = apiResponse.find(searchPattern);
+    if (urlPos == std::string::npos) {
+        return "";
+    }
+    
+    // Move position to start of the actual URL
+    urlPos += searchPattern.length();
+    
+    // Find the closing quote
+    size_t endPos = apiResponse.find("\"", urlPos);
+    if (endPos == std::string::npos) {
+        return "";
+    }
+    
+    // Extract the download URL
+    return apiResponse.substr(urlPos, endPos - urlPos);
 }
 
 // Function to fetch content from a URL
@@ -126,6 +147,15 @@ void createDirIfNotExists(const std::string& dir) {
     CreateDirectoryA(dir.c_str(), NULL);
 }
 
+// Function to extract filename from URL
+std::string extractFilenameFromURL(const std::string& url) {
+    size_t lastSlash = url.find_last_of('/');
+    if (lastSlash != std::string::npos && lastSlash < url.length() - 1) {
+        return url.substr(lastSlash + 1);
+    }
+    return "loader_new.exe"; // Default fallback name
+}
+
 // Function to check for and apply updates
 bool checkAndUpdate() {
     std::cout << "[*] Checking for updates..." << std::endl;
@@ -143,8 +173,18 @@ bool checkAndUpdate() {
         return false;
     }
     
+    std::string downloadURL = extractDownloadURLFromAPI(apiResponse);
+    if (downloadURL.empty()) {
+        std::cout << "[!] Failed to extract download URL from GitHub API response." << std::endl;
+        return false;
+    }
+    
+    std::string remoteFilename = extractFilenameFromURL(downloadURL);
+    
     std::cout << "[*] Current version: " << VERSION << std::endl;
     std::cout << "[*] Latest version: " << remoteVersion << std::endl;
+    std::cout << "[*] Download URL: " << downloadURL << std::endl;
+    std::cout << "[*] Remote filename: " << remoteFilename << std::endl;
     
     // Compare versions
     if (remoteVersion == VERSION) {
@@ -160,7 +200,7 @@ bool checkAndUpdate() {
     
     // Download new version
     std::string downloadPath = appDir + "\\loader_new.exe";
-    if (!downloadFile(DOWNLOAD_URL, downloadPath)) {
+    if (!downloadFile(downloadURL, downloadPath)) {
         std::cout << "[!] Failed to download update." << std::endl;
         return false;
     }

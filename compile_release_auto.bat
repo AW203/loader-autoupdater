@@ -19,10 +19,7 @@ g++ release_loader.cpp release_version.res -o loader_%VERSION%.exe -lwininet -lu
 if %ERRORLEVEL% == 0 (
     echo Compilation successful!
     echo The executable loader_%VERSION%.exe has been created.
-    
-    echo Creating a copy named loader.exe for GitHub release...
-    copy loader_%VERSION%.exe loader.exe
-    echo Remember to upload loader.exe to your GitHub release!
+    echo Upload this file to your GitHub release with tag v%VERSION%
 ) else (
     echo Compilation error!
     echo Make sure your compiler is properly installed and all paths are configured.
