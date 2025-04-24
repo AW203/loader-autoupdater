@@ -16,7 +16,7 @@
 const std::string GITHUB_USER = "AW203";
 const std::string GITHUB_REPO = "loader-autoupdater";
 const std::string VERSION_FILE_URL = "https://raw.githubusercontent.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/main/version.txt";
-const std::string DOWNLOAD_URL = "https://github.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/releases/latest/download/loader_1.0.0.exe";
+const std::string DOWNLOAD_URL = "https://github.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/releases/latest/download/loader.exe";
 
 // Function to fetch content from a URL
 std::string fetchFromUrl(const std::string& url) {
@@ -128,15 +128,38 @@ bool checkAndUpdate() {
     std::string updaterPath = appDir + "\\updater.bat";
     std::string exePath = appDir + "\\loader.exe";
     
+    // Get current executable path
+    char currentExePath[MAX_PATH];
+    GetModuleFileNameA(NULL, currentExePath, MAX_PATH);
+    
     std::ofstream updater(updaterPath);
     updater << "@echo off" << std::endl;
     updater << "echo Updating..." << std::endl;
     updater << "timeout /t 1 /nobreak > nul" << std::endl;
-    updater << "if exist \"" << exePath << "\" del \"" << exePath << "\"" << std::endl;
+    
+    // Wait to make sure the original process is closed
+    updater << "echo Waiting for original process to close..." << std::endl;
+    updater << "timeout /t 2 /nobreak > nul" << std::endl;
+    
+    // Forcefully delete old executable (using permanent deletion)
+    updater << "echo Removing old version..." << std::endl;
+    updater << "if exist \"" << exePath << "\" del /F /Q \"" << exePath << "\"" << std::endl;
+    updater << "if exist \"" << currentExePath << "\" del /F /Q \"" << currentExePath << "\"" << std::endl;
+    
+    // Copy new version
+    updater << "echo Installing new version..." << std::endl;
     updater << "copy \"" << downloadPath << "\" \"" << exePath << "\"" << std::endl;
-    updater << "del \"" << downloadPath << "\"" << std::endl;
+    
+    // Clean up downloaded file
+    updater << "del /F /Q \"" << downloadPath << "\"" << std::endl;
+    
     updater << "echo Update completed!" << std::endl;
+    
+    // Launch new version
     updater << "start \"\" \"" << exePath << "\"" << std::endl;
+    
+    // Self-destruct the updater script
+    updater << "echo Cleaning up..." << std::endl;
     updater << "del \"%~f0\"" << std::endl;
     updater.close();
     
