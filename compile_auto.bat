@@ -3,11 +3,9 @@ cd C:\Users\Yayam\Music\loader-autoupdate
 echo Compiling Auto-Update Loader with automatic version detection...
 
 echo Extracting version from source code...
-FOR /F "tokens=2 delims=^" %%G IN ('findstr /C:"#define VERSION" simple_loader.cpp') DO (
-    SET VERSION=%%G
-)
+for /f "tokens=3" %%i in ('findstr /C:"#define VERSION" simple_loader.cpp') do set VERSION=%%i
+set VERSION=%VERSION:"=%
 
-SET VERSION=%VERSION:"=%
 echo Detected version: %VERSION%
 
 echo Compiling resources...
